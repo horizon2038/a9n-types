@@ -21,7 +21,12 @@ pub const ARCH_INFO_MAX: usize = 128;
 #[repr(C)]
 pub struct InitInfo {
     // kernel description
-    pub kernel_version: Word,
+    pub kernel_major_version: Word,
+    pub kernel_minor_version: Word,
+    pub kernel_patch_version: Word,
+    // c-char[32] pre-release
+    pub kernel_pre_release: [u8; 32],
+    pub kernel_build_metadata: [u8; 32],
 
     pub arch_info: [Word; ARCH_INFO_MAX],
 
@@ -60,6 +65,26 @@ impl InitInfo {
                 | (target_depth << common_offset_bit)
                 | (index << generic_index_shift),
         )
+    }
+}
+
+impl InitInfo {
+    pub fn get_pre_release_string(&self) -> &str {
+        let len = self
+            .kernel_pre_release
+            .iter()
+            .position(|&c| c == 0)
+            .unwrap_or(self.kernel_pre_release.len());
+        core::str::from_utf8(&self.kernel_pre_release[..len]).unwrap_or("")
+    }
+
+    pub fn get_build_metadata_string(&self) -> &str {
+        let len = self
+            .kernel_build_metadata
+            .iter()
+            .position(|&c| c == 0)
+            .unwrap_or(self.kernel_build_metadata.len());
+        core::str::from_utf8(&self.kernel_build_metadata[..len]).unwrap_or("")
     }
 }
 
